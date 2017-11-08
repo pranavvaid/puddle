@@ -1,0 +1,14 @@
+INSERT ALL DATA INSIDE THE PROVIDED PARENTHESES
+Number of droplets is the total number of droplets to be initialized.
+Droplet initial volume is the actual volume of the droplets to be initialized.
+Maximum droplet travel distance is the max number of electrodes droplets can travel between frames.
+Frame size is the size of the frame which will be used for calculations. 
+QR Code update rate is how often the QR code and fiducial marker will be redetected.
+Default droplet height is the height assumed for droplets if no other data is available.
+
+Number of Droplets: (6)
+Droplet initial volume: (4)
+Maximum droplet travel distance: (5)
+Frame size: [432, 768]
+QR Code update rate (seconds): (5)
+Default droplet height: (0.37)
