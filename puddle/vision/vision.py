@@ -30,6 +30,7 @@ class Vision:
 #            cv2.imshow('im', im)
         totTime = time.time() - startTime
         print("Vision FPS: " + str(1/totTime))
+        print(len(self.detector.accessDroplets()))
             
     def process_image_background(self, grayImg):
         self.detector.updateBackground(grayImg)
