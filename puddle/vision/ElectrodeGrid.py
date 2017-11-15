@@ -7,8 +7,8 @@ np.set_printoptions(threshold = np.inf)
 
 import Electrode
 import Line
-from hampy.hampy import detect_markers
-from hampy.fiducialmarker import detect_fiducials
+from hampy import detect_markers
+from fiducialmarker import detect_fiducials
 
 import HelperFunctions as func
 
