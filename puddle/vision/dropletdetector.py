@@ -57,7 +57,23 @@ class DropletDetector:
         # The weights for the previous background and the incoming frame in determining the background image
         self.previousWeight = 0.9999
         self.incomingWeight = 0.0001
-        
+    
+    # Extracts a particular region of an image based on a contour
+    def extractImgAtContour(self, contour, parentImg, invImg = False, frameSize = [480, 640]):
+        areaToColor = np.zeros((frameSize[0],frameSize[1]), dtype=np.uint8)
+        imgOfArea = np.zeros((frameSize[0],frameSize[1]), dtype=np.uint8)
+        # Fill in the contour area
+        cv2.drawContours(areaToColor, contour, -1, (255), -1)
+        if invImg:
+            # Get the image everywhere besides the contour area
+            imgOfArea = cv2.bitwise_and(parentImg, parentImg, mask = cv2.bitwise_not(areaToColor)) 
+        else:
+            # Get the image inside the contour area
+            imgOfArea = cv2.bitwise_and(parentImg, parentImg, mask = areaToColor)
+        return imgOfArea
+    
+    def multiplyArrays(self, arr1, arr2, arr3, arr4):
+        return arr1*arr2 + arr3/255*arr4
         
     # Updates the background image
     def updateBackground(self, grayFrame):
@@ -66,19 +82,23 @@ class DropletDetector:
         # At the first frame, "pop" the background everywhere besides the exclusion zone
         if not self.backgroundRetrieved:
             # Pop the background everywhere besides the exclusion area (divide by 255 to get a np array of float64)
-            self.cumulative += func.extractImgAtContour(self.exclusionZone, grayFrame, invImg = True, frameSize = self.frameSize)/255
+            self.cumulative += self.extractImgAtContour(self.exclusionZone, grayFrame, invImg = True, frameSize = self.frameSize)/255
             self.backgroundRetrieved = True
             
         # Called when all droplet are outside the initialization area (allDropletsInitialized is 1)
         if self.allDropletsInitialized == 1:
             # Pop the background at the exclusion area (divide by 255 to get a np array of float64)
-            self.cumulative += func.extractImgAtContour(self.exclusionZone, grayFrame, frameSize = self.frameSize)/255
+            self.cumulative += self.extractImgAtContour(self.exclusionZone, grayFrame, frameSize = self.frameSize)/255
             # Signify that the exclusion area is able to be used now by setting allDropletsInitialized to 2
             self.allDropletsInitialized = 2
             # Make the background more responsize to change (now that we know where all droplets are)
             self.previousWeight = 0.99
             self.incomingWeight = 0.01
+            print("\n\n=============================")
+            print("=============================")
             print("ALL INITIALIZED")
+            print("=============================")
+            print("=============================\n\n")
             
         # Find where the droplet is not there, divide by 255 to get values of either 0 or 1
         invMask = cv2.bitwise_not(self.dropletMask)/255
@@ -87,7 +107,8 @@ class DropletDetector:
         old = self.cumulative
         
         # Do an IIR filter for the background
-        self.cumulative = self.cumulative*self.previousWeight + grayFrame/255*self.incomingWeight
+#        self.cumulative = self.cumulative*self.previousWeight + grayFrame/255*self.incomingWeight
+        self.cumulative = self.multiplyArrays(self.cumulative, self.previousWeight, grayFrame, self.incomingWeight)
         
         # Don't change the background at places where the droplets are located
         self.cumulative[invMask==0] = old[invMask==0]
