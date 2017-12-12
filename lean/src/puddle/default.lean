@@ -7,12 +7,19 @@ constant drop : Type
 --     write k' v',
 --     get v,
 
-inductive term_ (v : Type)
-| var : v → term_
-| input : term_
-| output : term_ → term_
-| mix : term_ → term_ → term_
-| bind : term_ → (v → term_) → term_
+-- term : measure -> Type
+inductive type : Type
+| unit
+
+def context := list (string × type)
+
+-- The polymoprhic term we use for implementing PHOAS
+inductive pterm (v : Type) /- :context → type → -/ : Type
+| var : v → pterm
+| input : pterm
+| output : pterm → pterm
+| mix : pterm → pterm → pterm
+| bind : pterm → (v → pterm) → pterm
 
 -- output (if cond then d1 else d2)
 
@@ -88,14 +95,23 @@ instance fn.has_repr : has_repr fn :=
 
 end py
 
-def term := term_ string
+def term := pterm string
 
-open term_
+open pterm
 
 def mix_out : term :=
-    (term_.bind (term_.input _) $
-        (fun d1, term_.bind (term_.input _)  $
+    (pterm.bind (pterm.input _) $
+        (fun d1, pterm.bind (pterm.input _)  $
             (fun d2, output (mix (var d1) (var d2)))))
+
+/-
+    d1 = input()
+    d2 = input()
+    d3 = mix d1 d2
+    r = output(d3)
+    return r
+-/
+
 
 def compiler_st := (nat × list py.stmt)
 def compiler_st.initial : compiler_st :=
@@ -113,29 +129,48 @@ end
 def compiler_m.run (action : compiler_m py.stmt) : py.stmt :=
 match action compiler_st.initial with
 | none := sorry
-| some (v, (_, bs)) := py.stmt.seq (bs ++ [v])
+| some (v, (_, bs)) := py.stmt.seq (bs.reverse ++ [v])
 end
 
 meta def fresh_name : compiler_m string :=
-    do (c, bs) ← state_t.read,
-       state_t.write (c + 1, bs),
-       return ("d" ++ to_string c)
+do (c, bs) ← state_t.read,
+   state_t.write (c + 1, bs),
+   return ("d" ++ to_string c)
+
+namespace puddle.runtime
+
+def input := ["puddle", "input"]
+def output := ["puddle", "output"]
+def mix := ["puddle", "mix"]
+
+end puddle.runtime
 
 meta mutual def mk_binding, compile_body, compile
 with mk_binding : term → compiler_m string
-| t := do stmt ← compile_body t,
-          (c, bs) ← state_t.read,
-          state_t.write (c, stmt :: bs),
-          return "foo"
-with compile_body : term → compiler_m py.stmt
-| (term_.input _) := pure $ py.stmt.expr $ py.mk_call ["puddle", "input"] []
-| (term_.output d) := pure $ py.stmt.expr $ py.mk_call ["puddle", "output"] []
-| (term_.bind m1 m2) :=
+| t :=
+   match t with
+   | (pterm.var x) := return x
+   | _ :=
+     do res ← fresh_name,
+        stmt ← compile_body res t,
+        (c, bs) ← state_t.read,
+        state_t.write (c, stmt :: bs),
+        return res
+   end
+with compile_body : string → term → compiler_m py.stmt
+| res (pterm.input _) := pure $ py.stmt.assign res (py.mk_call puddle.runtime.input [])
+| res (pterm.output d) :=
+    do out_drop ← mk_binding d,
+       pure $ py.stmt.expr $ py.mk_call puddle.runtime.output [py.expr.var out_drop]
+| res (pterm.bind m1 m2) :=
   do v ← mk_binding m1,
-     compile_body (m2 v)
-| (term_.var x) := pure $ py.stmt.expr (py.expr.var x)
-| (term_.mix d1 d2) := pure $ py.stmt.expr (py.expr.var "mix")
+     compile_body res (m2 v)
+| res (pterm.var x) := pure $ py.stmt.assign res (py.expr.var x)
+| res (pterm.mix d1 d2) :=
+    do d1 ← mk_binding d1,
+       d2 ← mk_binding d2,
+       pure $ py.stmt.assign res (py.expr.call puddle.runtime.mix [py.expr.var d1, py.expr.var d2])
 with compile : term → py.fn
-| t := py.fn.mk "compiled_fn" [] (compile_body t).run
+| t := py.fn.mk "compiled_fn" [] (do n ← fresh_name, compile_body n t).run
 
 #eval (compile mix_out)
