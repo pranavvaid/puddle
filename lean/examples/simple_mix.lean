@@ -6,7 +6,9 @@ open puddle.extraction
 pdef mix_out :=
     let d1 = input;
     let d2 = input;
-    let d3 = mix(d1,d2);
-    output(d3)
+    let d3 = mix d1 d2;
+    output d3;
+
+#print mix_out
 
 #eval (compile mix_out)

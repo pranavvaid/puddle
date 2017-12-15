@@ -19,13 +19,24 @@ meta def puddle_body : lean.parser term :=
     then return $ term.input type.unit
     else if fn = `output
     then return $ (term.output term.unit)
+    else if fn = `mix
+    then do d1 ← ident, d2 ← ident,
+            let tm := term.mix (term.var (to_string d1)) (term.var (to_string d2)),
+            pure tm
     else (tactic.fail "foo" : tactic term)),
     tk ";",
     obody ← optional puddle_body,
     match obody with
     | none := return (term.bind (to_string x) type.unit val term.unit)
     | some body := return (term.bind (to_string x) type.unit val body)
-    end)
+    end) <|>
+(do x ← ident,
+    if x = `output
+    then do arg ← ident,
+            let tm := term.output (term.var (to_string arg)),
+            tk ";",
+            pure tm
+    else (tactic.fail "expected output found:" : tactic term))
 
 --   decl ← inductive_decl.parse meta_info,
 --   add_coinductive_predicate decl.u_names decl.params $ decl.decls.map $ λ d, (d.sig, d.intros),
@@ -42,13 +53,9 @@ meta def puddle_def (meta_info : decl_meta_info) (_ : parse $ tk "pdef") : lean.
 do i ← ident,
    tk ":=",
    tm ← puddle_body,
-  -- (tactic.fail "This is a type error Max!" : tactic unit),
-   return ().
+   -- I'll show you the underlying term tactic.trace tm.repr,
+   tactic.add_decl (mk_definition i [] `(term) `(tm)),
+   return ()
 
 end puddle_def
 end puddle
-
-pdef try_mix :=
-    let d1 = input;
-    let d2 = input;
-
