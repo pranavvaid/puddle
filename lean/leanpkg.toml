@@ -4,3 +4,4 @@ version = "0.1"
 lean_version = "master"
 
 [dependencies]
+struct_tact = {git = "https://github.com/uwplse/struct_tact", rev = "master" }
