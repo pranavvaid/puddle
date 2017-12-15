@@ -10,7 +10,22 @@ open lean.parser
 open interactive
 open syntax
 
-meta def puddle_body : lean.parser term := sorry
+meta def puddle_body : lean.parser term :=
+(do tk "let",
+    x ← ident,
+    tk "=",
+    fn ← ident,
+    val ← (if fn = `input
+    then return $ term.input type.unit
+    else if fn = `output
+    then return $ (term.output term.unit)
+    else (tactic.fail "foo" : tactic term)),
+    tk ";",
+    obody ← optional puddle_body,
+    match obody with
+    | none := return (term.bind (to_string x) type.unit val term.unit)
+    | some body := return (term.bind (to_string x) type.unit val body)
+    end)
 
 --   decl ← inductive_decl.parse meta_info,
 --   add_coinductive_predicate decl.u_names decl.params $ decl.decls.map $ λ d, (d.sig, d.intros),
@@ -26,10 +41,14 @@ meta def puddle_body : lean.parser term := sorry
 meta def puddle_def (meta_info : decl_meta_info) (_ : parse $ tk "pdef") : lean.parser unit :=
 do i ← ident,
    tk ":=",
+   tm ← puddle_body,
+  -- (tactic.fail "This is a type error Max!" : tactic unit),
    return ().
 
 end puddle_def
 end puddle
 
 pdef try_mix :=
+    let d1 = input;
+    let d2 = input;
 

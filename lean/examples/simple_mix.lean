@@ -1,19 +1,12 @@
 import ..src.puddle
+import ..src.puddle.puddle_def
 
-open pterm
 open puddle.extraction
 
-def mix_out : term :=
-    (pterm.bind (pterm.input _) $
-        (fun d1, pterm.bind (pterm.input _)  $
-            (fun d2, output (mix (var d1) (var d2)))))
-
-/-
-    d1 = input()
-    d2 = input()
-    d3 = mix d1 d2
-    r = output(d3)
-    return r
--/
+pdef mix_out :=
+    let d1 = input;
+    let d2 = input;
+    let d3 = mix(d1,d2);
+    output(d3)
 
 #eval (compile mix_out)
