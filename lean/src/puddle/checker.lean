@@ -1,22 +1,28 @@
 import struct_tact
 import .syntax
 import .except
+import .map
 
 namespace puddle
 namespace checker
 
 open puddle.syntax
 
-def context := list (string × type)
-def context.empty : context := []
+def context := map string type × list string
+
+def context.empty : context := (map.empty, [])
+
+def in_scope : context → string → bool
+| (m, ns) n := m.contains n ∨ ns.mem n
 
 def context.lookup : context → string → option type
-| cx k := none
+| (m, _) key := m.lookup key
 
-def context.extend : context → context → context
-| cx cx' := cx
+def context.extend : context → list (string × type) → context
+| (m, ns) kvs := (m.extend kvs, ns)
 
--- #check well_founded_tactics.dec_tac
+def context.consume : context → string → context
+| cx k := cx
 
 def err := string
 
@@ -39,16 +45,31 @@ do t1 ← infer cx d1,
    t2 ← infer cx d2,
    type.mix t1 t2
 | cx (term.output d) := except.ok type.unit
+| cx term.unit := except.ok type.unit
 using_well_founded { dec_tac := tactic.admit }
 
 inductive typed : context → term → context → type → Prop
-| output : forall cx d, typed cx (term.output d) cx type.unit
-| input : forall cx ty, typed cx (term.input ty) cx ty
+| output :
+    forall cx d,
+    typed cx (term.output d) cx type.unit
+| input :
+    forall cx ty,
+    typed cx (term.input ty) cx ty
 | mix : forall cx cx' cx'' d1 d2 ty1 ty2 ty3,
     typed cx d1 cx' ty1 →
     typed cx' d2 cx'' ty2 →
     (type.mix ty1 ty2) = except.ok ty3 →
     typed cx (term.mix d1 d2) cx'' ty3
+| var :
+    forall (cx : context) x ty,
+    cx.lookup x = some ty →
+    typed cx (term.var x) (cx.consume x) ty
+| bind :
+    forall (cx cx' cx'' : context) x ty v body body_ty,
+    typed cx v cx' ty →
+    typed (cx'.extend [(x, ty)]) body cx'' body_ty →
+    typed cx (term.bind x ty v body) cx'' body_ty
+| unit : forall cx, typed cx term.unit cx type.unit
 
 end checker
 end puddle
