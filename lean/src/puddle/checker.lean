@@ -21,36 +21,34 @@ def context.extend : context → context → context
 def err := string
 
 mutual def check, infer
-with check : term → type → except err type
-| t expected :=
-    do t ← infer t,
+with check : context → term → type → except err type
+| cx t expected :=
+    do t ← infer cx t,
        if t = expected
        then except.ok t
        else except.error "mismatch"
-with infer : term → except err type
-| (term.free x ty) := except.ok ty
-| (term.var x) := except.error "can't type var"
-| (term.bind x ty v body) :=
-   do ty' ← check v ty, -- we might need the normalized type here
-      infer (term.instantiate (term.free x ty') body)
-| (term.input t) := except.ok t
-| (term.mix d1 d2) :=
-do t1 ← infer d1,
-   t2 ← infer d2,
+with infer : context → term → except err type
+| cx (term.var x) := except.error "can't type var"
+| cx (term.bind x ty v body) :=
+   do ty' ← check cx v ty, -- we might need the normalized type here
+      -- term.instantiate (term.free x ty') body)
+      infer cx body
+| cx (term.input t) := except.ok t
+| cx (term.mix d1 d2) :=
+do t1 ← infer cx d1,
+   t2 ← infer cx d2,
    type.mix t1 t2
-| (term.output d) := except.ok type.unit
+| cx (term.output d) := except.ok type.unit
 using_well_founded { dec_tac := tactic.admit }
 
-inductive typed : term → type → Prop
-| output : forall d, typed (term.output d) type.unit
-| input : forall ty, typed (term.input ty) ty
-| mix : forall d1 d2 ty1 ty2 ty3,
-    typed d1 ty1 →
-    typed d2 ty2 →
+inductive typed : context → term → context → type → Prop
+| output : forall cx d, typed cx (term.output d) cx type.unit
+| input : forall cx ty, typed cx (term.input ty) cx ty
+| mix : forall cx cx' cx'' d1 d2 ty1 ty2 ty3,
+    typed cx d1 cx' ty1 →
+    typed cx' d2 cx'' ty2 →
     (type.mix ty1 ty2) = except.ok ty3 →
-    typed (term.mix d1 d2) ty3
-| free : forall x ty,
-    typed (term.free x ty) ty
+    typed cx (term.mix d1 d2) cx'' ty3
 
 end checker
 end puddle
