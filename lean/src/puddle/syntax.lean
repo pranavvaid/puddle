@@ -51,6 +51,21 @@ def repr : term → string
 | (term.bind x ty v body) := "term.bind " ++ x ++ ty.repr ++ v.repr ++ body.repr
 | (term.unit) := "term.unit"
 
+instance has_repr : has_repr term :=
+⟨ repr ⟩
+
+def to_string : term → string
+| (term.var x) := x
+| (term.input t) := "input " ++ t.repr -- fix me
+| (term.output tm) := "output " ++ tm.to_string
+| (term.mix tm1 tm2) := "mix " ++ tm1.to_string ++ tm2.to_string
+| (term.bind x ty v body) := -- fix me
+    "let " ++ x ++ ": " ++ ty.repr ++ v.to_string ++ ";\n" ++ body.to_string
+| (term.unit) := "()"
+
+instance has_to_string : has_to_string term :=
+⟨ to_string ⟩
+
 end term
 
 end syntax
