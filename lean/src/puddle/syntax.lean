@@ -19,6 +19,7 @@ inductive term : Type
 | output : term → term
 | mix : term → term → term
 | bind : string → type → term → term → term
+| unit : term
 
 namespace term
 
