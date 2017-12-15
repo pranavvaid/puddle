@@ -10,7 +10,10 @@ open puddle.syntax
 
 def context := map string type × list string
 
-def context.empty : context := (map.empty, [])
+def context.is_empty : context → bool
+| (m, _) := m = []
+
+def context.initial : context := (map.empty, [])
 
 def in_scope : context → string → bool
 | (m, ns) n := m.contains n ∨ ns.mem n
@@ -70,6 +73,21 @@ inductive typed : context → term → context → type → Prop
     typed (cx'.extend [(x, ty)]) body cx'' body_ty →
     typed cx (term.bind x ty v body) cx'' body_ty
 | unit : forall cx, typed cx term.unit cx type.unit
+
+/-- A term is well-typed if we can type it in the empty context
+    and the final context is empty, i.e we have consumed all bindings. -/
+def well_typed (t : term) (ty : type) :=
+forall final_ctx,
+    context.is_empty final_ctx →
+    typed context.initial t final_ctx ty
+
+theorem check_correct :
+forall t ty,
+  check context.initial t ty = except.ok ty →
+  well_typed t ty :=
+begin
+    intros,
+end
 
 end checker
 end puddle
