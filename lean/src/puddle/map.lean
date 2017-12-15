@@ -22,6 +22,9 @@ def extend {k v : Type} : map k v → map k v → map k v
 def shrink {k v : Type} : map k v → list k → map k v
 | cx keys := cx
 
+def contains {k v : Type} : map k v → k → bool
+| cx key := ff
+
 end map
 
 end puddle
