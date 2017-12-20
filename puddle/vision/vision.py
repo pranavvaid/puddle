@@ -6,6 +6,7 @@ import ElectrodeGrid
 import HelperFunctions as func
 import threading
 import time
+import os
 
 class Vision:
     
@@ -45,17 +46,21 @@ frame2 = None
 cap = cv2.VideoCapture("C:\\Users\\Pranav\\Desktop\\MergeandSplit.mp4")
 flag = True
 recenterFlag = True
+currentFrame = 0
+
 def read_img():
-    
     while cap.isOpened():
         startTime = time.time()
         ret, frame = cap.read()
         if frame is None:
             break
+        global currentFrame
+        currentFrame = currentFrame + 1
         global frame2
-        frame2 = cv2.resize(frame, (1280, 720))
-        if time.time()-startTime < 1/30:
-            time.sleep((1/30)-(time.time()-startTime))
+        #frame2 = cv2.resize(frame, (1280, 720))
+        frame2 = cv2.resize(frame, (1920, 1080))
+        if time.time()-startTime < 1/5:
+            time.sleep((1/5)-(time.time()-startTime))
         totTime = time.time() - startTime
         print("\nRead FPS: " + str(1/totTime))
     global flag
@@ -69,14 +74,28 @@ if __name__ == "__main__":
     videoSource = threading.Thread(target = read_img)
     print("begin")
     videoSource.start()
-
+    
+    savePath = os.path.join(os.getcwd(), 'data_actual')
+    
+    if not os.path.exists(savePath):
+        os.makedirs(savePath)
+    
     while flag:
         sys.stdout.flush()
         f = frame2
         if f is not None:
             v.process_image(f, recenter = recenterFlag)
             recenterFlag = False
-        
+            currentDroplets = v.detector.accessDroplets()
+            
+            completeName = os.path.join(savePath, str(currentFrame) + '.txt')
+            frameFile = open(completeName, 'w')
+            for droplet in currentDroplets:
+                frameFile.write(str(droplet.center) + "\n")
+                frameFile.write(str(droplet.area) + "\n")
+#                print(droplet.center)
+#                print(droplet.area)
+            frameFile.close()
 
 #while cap.isOpened():
 #    ret, frame = cap.read()

@@ -9,6 +9,6 @@ Default droplet height is the height assumed for droplets if no other data is av
 Number of Droplets: (6)
 Droplet initial volume: (4)
 Maximum droplet travel distance: (5)
-Frame size: [720, 1280]
+Frame size: [1080, 1920]
 QR Code update rate (seconds): (5)
 Default droplet height: (0.37)
