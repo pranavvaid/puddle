@@ -1,5 +1,6 @@
 import .syntax
 import .py
+import system.io
 
 namespace puddle
 namespace extraction
@@ -80,13 +81,21 @@ do decl ← tactic.get_decl n,
    | _ := tactic.fail "err"
    end
 
-meta def extract : tactic unit :=
+meta def write_python_file [ioi : io.interface] (file : string) (data : string) : io unit :=
+do handle ← io.mk_file_handle file io.mode.write,
+   io.fs.write handle data.to_char_buffer,
+   return ()
+
+meta def extract (file : option string := none) : tactic unit :=
     do ns ← attribute.get_instances `puddle_def,
        str ← ns.foldl (fun mstr n,
          do str ← mstr,
             str' ← compile_pdef n,
-            return (str ++ str')) (return ""),
-        tactic.trace str
+            return (str' ++ "\n\n" ++ str)) (return ""),
+        match file with
+        | none := tactic.trace str
+        | some f := tactic.run_io (fun ioi, @write_python_file ioi f str)
+        end
 
 end extraction
 end puddle
