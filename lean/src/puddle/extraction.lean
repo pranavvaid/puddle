@@ -68,8 +68,25 @@ with compile_body : string → term → compiler_m py.stmt
        d2 ← mk_binding d2,
        pure $ py.stmt.assign res (py.expr.call puddle.runtime.mix [py.expr.var d1, py.expr.var d2])
 | res (term.unit) := pure py.stmt.empty
-with compile : term → py.fn
-| t := py.fn.mk "compiled_fn" [] (do n ← fresh_name, compile_body n t).run
+with compile : name → term → py.fn
+| n t := py.fn.mk (to_string n) [] (do n ← fresh_name, compile_body n t).run
+
+meta def compile_pdef (n : name) : tactic string :=
+do decl ← tactic.get_decl n,
+   match decl with
+   | declaration.defn _ _ ty body _ _ :=
+   do tm ← tactic.eval_expr term body,
+      pure $ (repr $ compile n tm)
+   | _ := tactic.fail "err"
+   end
+
+meta def extract : tactic unit :=
+    do ns ← attribute.get_instances `puddle_def,
+       str ← ns.foldl (fun mstr n,
+         do str ← mstr,
+            str' ← compile_pdef n,
+            return (str ++ str')) (return ""),
+        tactic.trace str
 
 end extraction
 end puddle

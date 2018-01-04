@@ -9,5 +9,4 @@ pdef mix_out :=
     let d3 = mix d1 d2;
     output d3;
 
-#print mix_out
-#eval (compile mix_out)
+run_cmd extract

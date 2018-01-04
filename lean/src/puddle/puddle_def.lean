@@ -10,6 +10,10 @@ open lean.parser
 open interactive
 open syntax
 
+
+@[user_attribute] meta def puddle_def_attr : user_attribute unit :=
+{ name := `puddle_def, descr := "Mark as a Puddle definition" }
+
 meta def puddle_body : lean.parser term :=
 (do tk "let",
     x ← ident,
@@ -55,6 +59,7 @@ do i ← ident,
    tm ← puddle_body,
    -- I'll show you the underlying term tactic.trace tm.repr,
    tactic.add_decl (mk_definition i [] `(term) `(tm)),
+   puddle_def_attr.set i () tt,
    return ()
 
 end puddle_def
