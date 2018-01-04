@@ -87,6 +87,7 @@ forall t ty,
   well_typed t ty :=
 begin
     intros,
+    admit
 end
 
 end checker
