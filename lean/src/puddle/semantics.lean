@@ -5,16 +5,27 @@ namespace puddle
 
 open puddle.syntax
 
-
-
 structure ext :=
     (ty : Type)
     -- (default : ty)
     (mix_fn : ty → ty → ty)
     (split_fn : ty → (ty × ty))
 
+
 def ext.empty : ext :=
 { ty := unit, mix_fn := fun u1 u2, (), split_fn := fun _, ((), ()) }
+
+def multi_ext
+def multi_ext : list ext → ext
+| [] := ext.empty
+| (e :: es) :=
+    let ms := multi_ext es
+    in { ty := e.ty × ms.ty,
+         mix_fn := begin
+         end,
+         split_fn := begin end,
+    }
+
 
 def value (e : ext) :=
 nat × e.ty -- this should be a rational or real we need to figure out what the right thing is
