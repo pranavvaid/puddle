@@ -5,9 +5,21 @@ namespace puddle
 
 open puddle.syntax
 
-def grid := map string nat
 
-def to_quantity : term → nat := fun _, 0
+
+structure ext :=
+    (ty : Type)
+    -- (default : ty)
+    (mix_fn : ty → ty → ty)
+    (split_fn : ty → (ty × ty))
+
+def ext.empty : ext :=
+{ ty := unit, mix_fn := fun u1 u2, (), split_fn := fun _, ((), ()) }
+
+def value (e : ext) :=
+nat × e.ty -- this should be a rational or real we need to figure out what the right thing is
+
+def grid (e : ext) := map string (value e)
 
 inductive is_value : term → Prop
 | input :
@@ -21,7 +33,16 @@ inductive is_value : term → Prop
         is_value t2 →
         is_value (term.mix t1 t2)
 
-inductive step : grid → term → grid → term → Prop
+-- the fn for merging def merge
+def merge {e : ext} (v1 v2 : value e) : value e := sorry
+
+-- the fn for partitioning
+def partition {e : ext} (v1 : value e) : (value e × value e) := sorry
+
+-- convert a value term into a value
+def to_value {e : ext} : term → value e := sorry
+
+inductive step (e : ext) : grid e → term → grid e → term → Prop
 | output :
     forall grd grd' t t',
         step grd t grd' t' →
@@ -36,7 +57,7 @@ inductive step : grid → term → grid → term → Prop
 | bind_value :
     forall x v ty body n grd,
         is_value v →
-        to_quantity v = n →
+        to_value v = n →
         step grd (term.bind x ty v body) (grd.insert x n) body
 | mix_left :
     forall t1 t1' t2 grd grd',
