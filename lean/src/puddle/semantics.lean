@@ -11,21 +11,24 @@ structure ext :=
     (mix_fn : ty → ty → ty)
     (split_fn : ty → (ty × ty))
 
-
 def ext.empty : ext :=
 { ty := unit, mix_fn := fun u1 u2, (), split_fn := fun _, ((), ()) }
 
-def multi_ext
 def multi_ext : list ext → ext
 | [] := ext.empty
-| (e :: es) :=
-    let ms := multi_ext es
-    in { ty := e.ty × ms.ty,
-         mix_fn := begin
-         end,
-         split_fn := begin end,
-    }
-
+| (⟨e_ty, e_mix_fn, e_split_fn⟩ :: es) :=
+    match multi_ext es with
+    | ⟨ms_ty, ms_mix_fn, ms_split_fn⟩ :=
+        { ty := e_ty × ms_ty,
+           mix_fn := λ v1 v2,
+            (e_mix_fn v1.fst v2.fst,
+             ms_mix_fn v1.snd v2.snd),
+         split_fn := λ v1,
+            let (e1, e2) := e_split_fn v1.fst,
+                (ms1, ms2) := ms_split_fn v1.snd
+            in ((e1, ms1), (e2, ms2))
+        }
+    end
 
 def value (e : ext) :=
 nat × e.ty -- this should be a rational or real we need to figure out what the right thing is
