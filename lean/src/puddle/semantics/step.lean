@@ -34,7 +34,7 @@ inductive step (e : ext) : grid e → term → grid e → term → Prop
 | mix_right :
     forall t1 t2 t2' grd grd',
         step grd t2 grd' t2' →
-        step grd (term.mix t1 t2) grd' (term.mix t1 t2)
+        step grd (term.mix t1 t2) grd' (term.mix t1 t2')
 | mix_value :
     forall t1 t2 v1 v2 loc (grd grd' : grid e),
         is_value t1 →
