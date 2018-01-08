@@ -1,5 +1,5 @@
-import .syntax
-import .map
+import ..syntax
+import ..map
 
 namespace puddle
 
