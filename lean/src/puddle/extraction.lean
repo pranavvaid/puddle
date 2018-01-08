@@ -84,6 +84,7 @@ do decl ← tactic.get_decl n,
 meta def write_python_file [ioi : io.interface] (file : string) (data : string) : io unit :=
 do handle ← io.mk_file_handle file io.mode.write,
    io.fs.write handle data.to_char_buffer,
+   io.fs.close handle,
    return ()
 
 meta def extract (file : option string := none) : tactic unit :=

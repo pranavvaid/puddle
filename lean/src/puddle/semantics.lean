@@ -31,11 +31,20 @@ def multi_ext : list ext → ext
       in ((e1, ms1), (e2, ms2))
   }
 
-def grid (e : ext) := map string e.ty
+@[reducible] def quantity : Type := ℕ -- Should be Real
+
+inductive value (e : ext)
+| val : quantity → e.ty → value
+| pair : value → value → value
+
+def grid (e : ext) := map string (value e)
+
+def grid.input {e : ext} (g : grid e) (t : type) : option (string × grid e) := none
 
 inductive is_value : term → Prop
-| input :
-    forall t, is_value (term.input t)
+| loc :
+    forall l,
+        is_value (term.location l)
 | var :
     forall x,
         is_value (term.var x)
@@ -45,27 +54,16 @@ inductive is_value : term → Prop
         is_value t2 →
         is_value (term.mix t1 t2)
 
--- i think we only want this defined for things of the droplet type
-def to_value {e : ext} (grd: grid e) : term → e.ty
--- FIXME we should know that the thing is in there
-| (term.var x) := option.get_or_else (grd.lookup x) sorry
--- FIXME input needs to specify the properties of the thing
-| (term.input ty) := sorry
--- TODO does this even make sense to have an e.ty here?
-| (term.output tm) := sorry
-| (term.mix tm1 tm2) := e.mix_fn (to_value tm1) (to_value tm2)
-| (term.bind x ty v body) := sorry
-| (term.unit) := sorry
+def ext.mix (e : ext) : value e → value e → option (value e)
+| (value.val q1 e1) (value.val q2 e2) :=
+    value.val (q1 + q2) (e.mix_fn e1 e2)
+| _ _ := none
 
+def ext.split (e : ext) (v1 : value e) : option (value e) := none
 
--- -- the fn for merging def merge
--- def merge {e : ext} (v1 v2 : e.ty) : e.ty := e.
-
--- -- the fn for partitioning
--- def partition {e : ext} (v1 : value e) : (value e × value e) := sorry
-
--- -- convert a value term into a value
--- def to_value {e : ext} : term → value e := sorry
+def grid.to_value {e : ext} (grd: grid e) : term → option (value e)
+| (term.location l) := none -- this should be only success case
+| _ := none
 
 inductive step (e : ext) : grid e → term → grid e → term → Prop
 | output :
@@ -82,7 +80,7 @@ inductive step (e : ext) : grid e → term → grid e → term → Prop
 | bind_value :
     forall x v ty body n grd,
         is_value v →
-        to_value grd v = n →
+        grid.to_value grd v = some n →
         step grd (term.bind x ty v body) (grd.insert x n) body
 | mix_left :
     forall t1 t1' t2 grd grd',
@@ -92,5 +90,9 @@ inductive step (e : ext) : grid e → term → grid e → term → Prop
     forall t1 t2 t2' grd grd',
         step grd t2 grd' t2' →
         step grd (term.mix t1 t2) grd' (term.mix t1 t2)
+| input :
+    forall grd ty loc grd',
+        grid.input grd ty = some (loc, grd') →
+        step grd (term.input ty) grd' (term.location loc)
 
 end puddle
