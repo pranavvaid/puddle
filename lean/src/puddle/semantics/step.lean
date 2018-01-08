@@ -8,6 +8,7 @@ namespace puddle
 open puddle.syntax
 
 inductive step (e : ext) : grid e → term → grid e → term → Prop
+/- Output -/
 | output :
     forall grd grd' t t',
         step grd t grd' t' →
@@ -15,6 +16,7 @@ inductive step (e : ext) : grid e → term → grid e → term → Prop
 | output_value :
     forall grd t,
         step grd (term.output t) grd term.unit
+/- Let bindings -/
 | bind_binding :
     forall x v v' ty body grd grd',
         step grd v grd' v' →
@@ -24,6 +26,7 @@ inductive step (e : ext) : grid e → term → grid e → term → Prop
         is_value v →
         is_subst body v body'→
         step grd (term.bind x ty v body) grd body'
+/- Mix -/
 | mix_left :
     forall t1 t1' t2 grd grd',
         step grd t1 grd' t1' →
@@ -40,6 +43,7 @@ inductive step (e : ext) : grid e → term → grid e → term → Prop
         grid.to_droplet grd t2 = some v2 →
         grid.mix grd v1 v2 = some (loc, grd') →
         step grd (term.mix t1 t2) grd' (term.location loc)
+/- Input -/
 | input :
     forall grd ty loc grd',
         grid.input grd ty = some (loc, grd') →

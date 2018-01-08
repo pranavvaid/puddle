@@ -30,6 +30,8 @@ inductive term : Type
 | output : term → term
 | mix : term → term → term
 | bind : string → type → term → term → term
+| mk_pair : term → term → term
+| split : term → term
 | location : string → term
 | unit : term
 
@@ -43,6 +45,8 @@ meta instance reflect : has_reflect term
 | (term.bind x ty v body) :=
     ((`(λ v, λ ty, λ body, term.bind x ty v body).subst (reflect v)).subst (ty.reflect)).subst (reflect body)
 | (term.location l) := `(term.location l)
+| (term.mk_pair tm1 tm2) := (`(λ tm1, λ tm2, term.mk_pair tm1 tm2).subst (reflect tm1)).subst (reflect tm2)
+| (term.split t) := `(λ t, term.split t).subst (t.reflect)
 | (term.unit) := `(term.unit)
 
 def repr : term → string
@@ -52,6 +56,8 @@ def repr : term → string
 | (term.mix tm1 tm2) := "term.mix " ++ tm1.repr ++ tm2.repr
 | (term.bind x ty v body) := "term.bind " ++ x ++ ty.repr ++ v.repr ++ body.repr
 | (term.location l) := "term.location " ++ (has_repr.repr l)
+| (term.mk_pair tm1 tm2) := "term.mk_pair " ++ tm1.repr ++ tm2.repr
+| (term.split t) := "term.split " ++ t.repr
 | (term.unit) := "term.unit"
 
 instance has_repr : has_repr term :=
@@ -65,6 +71,8 @@ def to_string : term → string
 | (term.bind x ty v body) := -- fix me
     "let " ++ x ++ ": " ++ ty.repr ++ v.to_string ++ ";\n" ++ body.to_string
 | (term.location l) := "droplet:" ++ l
+| (term.mk_pair tm1 tm2) := "(" ++ tm1.repr ++ ", " ++ tm2.repr ++ ")"
+| (term.split t) := "term.split " ++ t.repr
 | (term.unit) := "()"
 
 instance has_to_string : has_to_string term :=
