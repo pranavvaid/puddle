@@ -52,11 +52,11 @@ inductive is_value : term → Prop
 | var :
     forall x,
         is_value (term.var x)
-| mix :
+| pair :
     forall t1 t2,
         is_value t1 →
         is_value t2 →
-        is_value (term.mix t1 t2)
+        is_value (term.mk_pair t1 t2)
 
 def grid.to_droplet {e : ext} (grd: grid e) : term → option (droplet e)
 | (term.location l) := none -- this should be only success case
@@ -65,5 +65,7 @@ def grid.to_droplet {e : ext} (grd: grid e) : term → option (droplet e)
 def grid.input {e : ext} (g : grid e) (t : type) : option (string × grid e) := none
 
 def grid.mix {e : ext} (g : grid e) (v1 v2 : droplet e) : option (string × grid e) := none
+
+def grid.split {e : ext} (g : grid e) (v1 : droplet e) : option (string × string × grid e) := none
 
 end puddle

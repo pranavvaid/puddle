@@ -49,6 +49,7 @@ do t1 ← infer cx d1,
    type.mix t1 t2
 | cx (term.output d) := except.ok type.unit
 | cx term.unit := except.ok type.unit
+| cx _ := except.error "broken"
 using_well_founded { dec_tac := tactic.admit }
 
 inductive typed : context → term → context → type → Prop

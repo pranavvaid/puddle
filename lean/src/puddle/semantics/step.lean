@@ -43,6 +43,26 @@ inductive step (e : ext) : grid e → term → grid e → term → Prop
         grid.to_droplet grd t2 = some v2 →
         grid.mix grd v1 v2 = some (loc, grd') →
         step grd (term.mix t1 t2) grd' (term.location loc)
+/- Split -/
+| split_step :
+    forall grd t1 t2 grd',
+        step grd t1 grd' t2 →
+        step grd (term.split t1) grd' (term.split t2)
+| split_value :
+    forall t1 d1 l1 l2 (grd grd' : grid e),
+        is_value t1 →
+        grid.to_droplet grd t1 = some d1 →
+        grid.split grd d1 = some (l1, l2, grd') →
+        step grd (term.split t1) grd' (term.mk_pair (term.location l1) (term.location l2))
+/- Tuples -/
+| pair_step_left :
+    forall t1 t1' t2 grd grd',
+        step grd t1 grd' t1' →
+        step grd (term.mk_pair t1 t2) grd' (term.mk_pair t1' t2)
+| pair_step_right :
+    forall t1 t2 t2' grd grd',
+        step grd t2 grd' t2' →
+        step grd (term.mk_pair t1 t2) grd' (term.mk_pair t1 t2')
 /- Input -/
 | input :
     forall grd ty loc grd',
