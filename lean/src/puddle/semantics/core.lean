@@ -33,13 +33,17 @@ def multi_ext : list ext → ext
 
 @[reducible] def quantity : Type := ℕ -- Should be Real
 
-inductive value (e : ext)
-| val : quantity → e.ty → value
-| pair : value → value → value
+inductive droplet (e : ext)
+| val : quantity → e.ty → droplet
 
-def grid (e : ext) := map string (value e)
+def ext.mix (e : ext) : droplet e → droplet e → option (droplet e)
+| (droplet.val q1 e1) (droplet.val q2 e2) :=
+    droplet.val (q1 + q2) (e.mix_fn e1 e2)
+| _ _ := none
 
-def grid.input {e : ext} (g : grid e) (t : type) : option (string × grid e) := none
+def ext.split (e : ext) (v1 : droplet e) : option (droplet e) := none
+
+def grid (e : ext) := map string (droplet e)
 
 inductive is_value : term → Prop
 | loc :
@@ -54,15 +58,12 @@ inductive is_value : term → Prop
         is_value t2 →
         is_value (term.mix t1 t2)
 
-def ext.mix (e : ext) : value e → value e → option (value e)
-| (value.val q1 e1) (value.val q2 e2) :=
-    value.val (q1 + q2) (e.mix_fn e1 e2)
-| _ _ := none
-
-def ext.split (e : ext) (v1 : value e) : option (value e) := none
-
-def grid.to_value {e : ext} (grd: grid e) : term → option (value e)
+def grid.to_droplet {e : ext} (grd: grid e) : term → option (droplet e)
 | (term.location l) := none -- this should be only success case
 | _ := none
+
+def grid.input {e : ext} (g : grid e) (t : type) : option (string × grid e) := none
+
+def grid.mix {e : ext} (g : grid e) (v1 v2 : droplet e) : option (string × grid e) := none
 
 end puddle

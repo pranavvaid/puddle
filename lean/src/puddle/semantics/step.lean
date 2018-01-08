@@ -32,6 +32,14 @@ inductive step (e : ext) : grid e → term → grid e → term → Prop
     forall t1 t2 t2' grd grd',
         step grd t2 grd' t2' →
         step grd (term.mix t1 t2) grd' (term.mix t1 t2)
+| mix_value :
+    forall t1 t2 v1 v2 loc (grd grd' : grid e),
+        is_value t1 →
+        is_value t2 →
+        grid.to_droplet grd t1 = some v1 →
+        grid.to_droplet grd t2 = some v2 →
+        grid.mix grd v1 v2 = some (loc, grd') →
+        step grd (term.mix t1 t2) grd' (term.location loc)
 | input :
     forall grd ty loc grd',
         grid.input grd ty = some (loc, grd') →
