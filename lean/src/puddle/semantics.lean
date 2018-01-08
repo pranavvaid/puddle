@@ -65,6 +65,9 @@ def grid.to_value {e : ext} (grd: grid e) : term → option (value e)
 | (term.location l) := none -- this should be only success case
 | _ := none
 
+-- TODO: Fill me in
+inductive is_subst : term → term → term → Prop
+
 inductive step (e : ext) : grid e → term → grid e → term → Prop
 | output :
     forall grd grd' t t',
@@ -78,10 +81,10 @@ inductive step (e : ext) : grid e → term → grid e → term → Prop
         step grd v grd' v' →
         step grd (term.bind x ty v body) grd' (term.bind x ty v' body)
 | bind_value :
-    forall x v ty body n grd,
+    forall x v ty body body' grd,
         is_value v →
-        grid.to_value grd v = some n →
-        step grd (term.bind x ty v body) (grd.insert x n) body
+        is_subst body v body'→
+        step grd (term.bind x ty v body) grd body'
 | mix_left :
     forall t1 t1' t2 grd grd',
         step grd t1 grd' t1' →
