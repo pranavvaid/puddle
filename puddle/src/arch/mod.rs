@@ -2,7 +2,7 @@ pub mod parse;
 pub mod grid;
 
 use std::ops::{Add, Sub};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::Read;
 
 use serde_json;
@@ -55,10 +55,14 @@ impl<'a> Sub for &'a Location {
 }
 
 pub type DropletId = usize;
+static DEFAULT_SHAPE: Location = Location{
+    x: 0, y: 0
+};
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub struct Droplet {
     pub location: Location,
+    pub shape: HashSet<Location>,
     // TODO should droplets really know about their destinations?
     pub destination: Option<Location>,
     pub collision_group: usize,
@@ -66,13 +70,29 @@ pub struct Droplet {
 
 impl Droplet {
     fn from_location(location: Location) -> Droplet {
+        let mut shape = HashSet::new();
+        shape.insert(DEFAULT_SHAPE);
+
         Droplet {
             location: location,
+            shape: shape,
             destination: None,
             collision_group: 0,
         }
     }
 
+    fn from_location_and_shape(location: Location, shape: HashSet<Location>) -> Droplet {
+        if !shape.contains(&DEFAULT_SHAPE) {
+            panic!("Invalid shape for droplet");
+        }
+        // TODO: check that the droplet is contiguous
+        Droplet {
+            location: location,
+            shape: shape,
+            destination: None,
+            collision_group: 0,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
