@@ -70,12 +70,9 @@ pub struct Droplet {
 
 impl Droplet {
     fn from_location(location: Location) -> Droplet {
-        let mut shape = HashSet::new();
-        shape.insert(DEFAULT_SHAPE);
-
         Droplet {
             location: location,
-            shape: shape,
+            shape: [DEFAULT_SHAPE].iter().cloned().collect(),
             destination: None,
             collision_group: 0,
         }
@@ -255,6 +252,7 @@ pub mod tests {
         {
             Droplet {
                 location: loc,
+                shape: [DEFAULT_SHAPE].iter().cloned().collect(),
                 destination: Some(dest),
                 collision_group: cg,
             }
