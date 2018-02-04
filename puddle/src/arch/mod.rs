@@ -59,7 +59,7 @@ static DEFAULT_SHAPE: Location = Location{
     x: 0, y: 0
 };
 
-#[derive(PartialEq, Eq, Hash, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Droplet {
     pub location: Location,
     pub shape: HashSet<Location>,
@@ -81,6 +81,7 @@ impl Droplet {
         }
     }
 
+    #[allow(dead_code)]
     fn from_location_and_shape(location: Location, shape: HashSet<Location>) -> Droplet {
         if !shape.contains(&DEFAULT_SHAPE) {
             panic!("Invalid shape for droplet");
