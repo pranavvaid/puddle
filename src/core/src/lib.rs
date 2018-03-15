@@ -34,6 +34,7 @@ mod exec;
 mod plan;
 mod command;
 mod process;
+pub mod vision;
 
 pub use grid::{DropletId, DropletInfo, Grid, Location};
 pub use process::*;
